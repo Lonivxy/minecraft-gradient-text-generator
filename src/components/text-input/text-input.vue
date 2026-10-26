@@ -12,6 +12,7 @@ import Strikethrough from '@sotaproject/strikethrough';
 import ObfuscatedTool from "./obfuscated-tool";
 import { isEmpty } from "lodash-es";
 import { useI18n } from "vue-i18n";
+import { useInterval } from "@/composables/useInterval";
 import { randomObfuscatedText } from "@/utils/obfuscated";
 
 const i18n = useI18n()
@@ -21,7 +22,6 @@ const emit = defineEmits<TextInputEmit>();
 const inputRef = ref<HTMLDivElement>();
 
 const editorInstance = shallowRef();
-let obfuscatedPreviewTimer: number | null = null;
 let domMutationObserver: MutationObserver | null = null;
 let syncDebounceTimer: number | null = null;
 let isSyncingEditor = false;
@@ -42,6 +42,14 @@ const scheduleSync = () => {
     syncEditorValue();
   }, 150);
 };
+
+function updateObfuscatedPreview() {
+  inputRef.value?.querySelectorAll<HTMLElement>(".mcg-obfuscated").forEach((element) => {
+    element.dataset.obfuscatedPreview = randomObfuscatedText(element.textContent ?? "");
+  });
+}
+
+useInterval(updateObfuscatedPreview, 90);
 
 onMounted(() => {
   const instance = new EditorJS({
@@ -102,7 +110,6 @@ onMounted(() => {
     onChange: (api) => syncEditorValue(api)
   })
   editorInstance.value = instance
-  obfuscatedPreviewTimer = window.setInterval(updateObfuscatedPreview, 90);
 
   // EditorJS's own onChange can stop firing after custom inline tool operations.
   // Observe the editor DOM directly and sync on real content changes instead.
@@ -118,21 +125,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   editorInstance.value?.destroy()
-  if (obfuscatedPreviewTimer !== null) {
-    window.clearInterval(obfuscatedPreviewTimer);
-  }
   if (syncDebounceTimer !== null) {
     window.clearTimeout(syncDebounceTimer);
   }
   domMutationObserver?.disconnect();
 })
-
-const updateObfuscatedPreview = () => {
-  inputRef.value?.querySelectorAll<HTMLElement>(".mcg-obfuscated").forEach((element) => {
-    const length = element.textContent?.length ?? 0;
-    element.dataset.obfuscatedPreview = randomObfuscatedText(length);
-  });
-}
 
 const stripVolatileAttributes = (html: string) => html.replace(/\sdata-obfuscated-preview="[^"]*"/g, "");
 

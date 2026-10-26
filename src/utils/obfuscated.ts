@@ -4,6 +4,6 @@ export const randomObfuscatedCharacter = () => {
   return OBFUSCATED_CHARACTERS[Math.floor(Math.random() * OBFUSCATED_CHARACTERS.length)];
 };
 
-export const randomObfuscatedText = (length: number) => {
-  return Array.from({ length }, randomObfuscatedCharacter).join("");
+export const randomObfuscatedText = (text: string) => {
+  return Array.from(text, (character) => character.trim() === "" ? character : randomObfuscatedCharacter()).join("");
 };

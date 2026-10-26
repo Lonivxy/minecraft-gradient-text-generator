@@ -27,30 +27,22 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { getTextShadowHex } from "@/utils/color";
 import { useTextStore } from "../../plugins/store/modules/text";
+import { useInterval } from "@/composables/useInterval";
 import { randomObfuscatedCharacter } from "@/utils/obfuscated";
 
 const textStore = useTextStore()
 const obfuscatedTick = ref(0);
-let obfuscatedPreviewTimer: number | null = null;
 
 const chapters = computed(() => {
   return textStore.adapter?.chapters ?? []
 })
 
-onMounted(() => {
-  obfuscatedPreviewTimer = window.setInterval(() => {
-    obfuscatedTick.value += 1;
-  }, 90);
-});
-
-onUnmounted(() => {
-  if (obfuscatedPreviewTimer !== null) {
-    window.clearInterval(obfuscatedPreviewTimer);
-  }
-});
+useInterval(() => {
+  obfuscatedTick.value += 1;
+}, 90);
 
 const displayCharacter = (character: string, obfuscated?: boolean) => {
   if (character.trim() === "") return " ";

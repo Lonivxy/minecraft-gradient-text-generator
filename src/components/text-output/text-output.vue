@@ -24,6 +24,7 @@ import TextParams from "../text-params/text-params.vue";
 import { flatten, isEmpty } from "lodash-es";
 import { McgCard } from "../mcg-card";
 import { Preview } from "../preview-pip";
+import { useInterval } from "@/composables/useInterval";
 import { randomObfuscatedCharacter } from "@/utils/obfuscated";
 
 const appStore = useAppStore();
@@ -34,7 +35,6 @@ const eventBus = useEventBus();
 const mcResult = ref('')
 const htmlResult = ref('')
 const previewContentRef = ref<HTMLDivElement>();
-let obfuscatedPreviewTimer: number | null = null;
 
 const usageTime = ref<number>(0)
 
@@ -44,7 +44,6 @@ const onGenerateInvoke = ({ tags, colors }: { tags: RichTagChunk | null; colors?
 
 onMounted(() => {
   eventBus.on("generate:invoke", onGenerateInvoke);
-  obfuscatedPreviewTimer = window.setInterval(updateObfuscatedPreview, 90);
   // The preview panel may mount after the last "generate:invoke" event
   // (e.g. when the mobile preview tab is opened for the first time).
   // Generate immediately from the current store state.
@@ -53,9 +52,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   eventBus.off("generate:invoke", onGenerateInvoke);
-  if (obfuscatedPreviewTimer !== null) {
-    window.clearInterval(obfuscatedPreviewTimer);
-  }
 });
 
 watch(htmlResult, () => {
@@ -70,6 +66,8 @@ const updateObfuscatedPreview = () => {
     element.dataset.obfuscatedPreview = randomObfuscatedCharacter();
   });
 };
+
+useInterval(updateObfuscatedPreview, 90);
 
 const generateOutput = (tags: RichTagChunk | null, colors?: HexColorString[]) => {
   const $tags = tags ?? appStore.processTags;
